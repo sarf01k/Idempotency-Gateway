@@ -22,7 +22,7 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
         return res.status(400).json({ error: "Missing required header: Idempotency-Key" });
     }
 
-    const ttlSeconds = Number(process.env.TTL_SECONDS || "86400");
+    const ttlSeconds = Number(process.env.TTL_SECONDS) || 86400;
 
     const record = await store.get(idempotencyKey);
 

@@ -22,7 +22,7 @@ export class RedisStore implements IdempotencyStore {
     }
 
     async set(key: string, record: PaymentRecord): Promise<void> {
-        const ttl = Math.floor((new Date(record.expiresAt).getTime() - Date.now()) / 1000);
+        const ttl = Number(process.env.TTL_SECONDS) || 86400;
         await this.client.set(key, JSON.stringify(record), { EX: ttl });
     }
 
