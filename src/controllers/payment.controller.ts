@@ -17,15 +17,7 @@ export const processPayment = async (req: Request, res: Response) => {
 
         const idempotencyKey = req.header("Idempotency-Key") as string;
 
-        await new Promise(_ => setTimeout(_, 2000));
-
-        // const paymentResponse = {
-        //     transactionId: `txn_${crypto.randomUUID().split("-")[0]}`,
-        //     status: "success",
-        //     amount,
-        //     currency,
-        //     timestamp: new Date().toISOString(),
-        // };
+        await new Promise(_ => setTimeout(_, 5000));
 
         const responseBody = { message: `Charged ${amount} ${currency}` };
 

@@ -27,7 +27,7 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
     const record = await store.get(idempotencyKey);
 
     if (!record) {
-        // new key — create PENDING record and forward to controller
+        // User Story 1: New Request Handling
         await store.set(idempotencyKey, {
             transactionId: `txn_${crypto.randomUUID().split("-")[0]}`,
             status: "PENDING",
@@ -49,7 +49,37 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
         return next();
     }
 
-    // logger.info(`[req_${requestId}] [idempotency] Concurrent hit. Request locked, waiting... | Key: ${idempotencyKey}`);
+
+    // Bonus User Story: Handling In-Flight Requests
+    if (record.status === "PENDING") {
+        logger.warn(`[req_${requestId}] [idempotency] In-flight request detected | Key: ${idempotencyKey}`);
+        auditLogger.info({
+            event: "WAITING",
+            details: {
+                requestId,
+                idempotencyKey,
+                reason: "Concurrent request with same idempotency key",
+            },
+        });
+
+        for (let i = 0; i < 10; i++) {
+            await new Promise(r => setTimeout(r, 1000));
+            const updated = await store.get(idempotencyKey);
+            if (updated?.status === "SUCCESS") {
+                auditLogger.info({
+                    event: "REPLAYED",
+                    details: {
+                        requestId,
+                        idempotencyKey,
+                        note: "Cached response returned after waiting for in-flight request",
+                    },
+                });
+                return res.status(200).header("X-Cache-Hit", "true").json(JSON.parse(updated.responseBody!));
+            }
+        }
+
+        return res.status(409).json({ error: "Request timed out waiting for duplicate to complete." });
+    }
 
     if (record.status === "SUCCESS") {
         // User Story 3: Key Reuse with Different Body
@@ -77,7 +107,7 @@ export const idempotencyMiddleware = async (req: Request, res: Response, next: N
                 note: "Cached response returned for duplicate request",
             },
         });
-        return res.status(200).json(JSON.parse(record.responseBody!));
+        return res.status(200).header("X-Cache-Hit", "true").json(JSON.parse(record.responseBody!));
     }
 
     next();
