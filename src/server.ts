@@ -1,13 +1,14 @@
+import "./env";
 import express, { Request, Response } from "express";
-import dotenv from "dotenv";
 import { processPayment } from "./controllers/payment.controller";
 import { idempotencyMiddleware } from "./middleware/idempotency.middleware";
-
-dotenv.config();
+import { requestLoggerMiddleware } from "./middleware/requestLogger.middleware";
+import store from "./store";
 
 const app = express();
 
 app.use(express.json());
+app.use(requestLoggerMiddleware);
 
 app.post("/process-payment", idempotencyMiddleware, processPayment);
 
@@ -20,6 +21,13 @@ app.get("/health", (req: Request, res: Response) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`+ Server is running on port ${PORT}\n`);
-});
+
+async function start() {
+    await store.connect();
+
+    app.listen(PORT, () => {
+        console.log(`+ Server is running on port ${PORT}\n`);
+    });
+}
+
+start();

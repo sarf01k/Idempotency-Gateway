@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
-import { PaymentRequestSchema } from "../types/payment-request";
+import { PaymentRequestSchema } from "../schemas/payment-request.schema";
+import store from "../store";
+import { logger } from "../utils/logger";
 
 export const processPayment = async (req: Request, res: Response) => {
     try {
@@ -13,21 +15,28 @@ export const processPayment = async (req: Request, res: Response) => {
         // Simulate payment processing logic
         const { amount, currency } = requesBodyParse.data;
 
+        const idempotencyKey = req.header("Idempotency-Key") as string;
+
         await new Promise(_ => setTimeout(_, 2000));
 
-        const paymentResponse = {
-            transactionId: `txn_${crypto.randomUUID().split("-")[0]}`,
-            status: "success",
-            amount,
-            currency,
-            timestamp: new Date().toISOString(),
-        };
+        // const paymentResponse = {
+        //     transactionId: `txn_${crypto.randomUUID().split("-")[0]}`,
+        //     status: "success",
+        //     amount,
+        //     currency,
+        //     timestamp: new Date().toISOString(),
+        // };
 
-        res.status(200).json({
-            message: `Charge ${amount} ${currency}`,
+        const responseBody = { message: `Charged ${amount} ${currency}` };
+
+        await store.update(idempotencyKey, {
+            status: "SUCCESS",
+            responseBody: JSON.stringify(responseBody),
         });
+
+        res.status(200).json(responseBody);
     } catch (error) {
-        console.error("Error processing payment:", error);
+        logger.error(`[req_${req.id}] [payment] Error processing payment: ${error}`);
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
