@@ -1,0 +1,38 @@
+{
+  "name": "idempotency-gateway",
+  "version": "1.0.0",
+  "description": "> A \"Pay-Once\" API layer that ensures payment requests are processed exactly once, no matter how many times they are retried.",
+  "main": "server.ts",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
+    "build": "tsc",
+    "start": "npm run build && node dist/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sarf01k/Idempotency-Gateway.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sarf01k/Idempotency-Gateway/issues"
+  },
+  "homepage": "https://github.com/sarf01k/Idempotency-Gateway#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.0.1",
+    "nodemon": "^3.1.14",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}
