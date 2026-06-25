@@ -1,11 +1,15 @@
 import express, { Request, Response } from "express";
 import dotenv from "dotenv";
+import { processPayment } from "./controllers/payment.controller";
+import { idempotencyMiddleware } from "./middleware/idempotency.middleware";
 
 dotenv.config();
 
 const app = express();
 
 app.use(express.json());
+
+app.post("/process-payment", idempotencyMiddleware, processPayment);
 
 app.get("/health", (req: Request, res: Response) => {
     res.status(200).json({
